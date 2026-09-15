@@ -1,0 +1,69 @@
+// Roster initialization and management
+const ROSTER = [];
+
+// Fallback generator for 30 slots
+const rosterNames = [
+    "Kathy the Karen", "Bud the Chud", "Speedy", "Mega Chad", "Salty Sam",
+    "Keyboard Warrior", "Boomer Bob", "Doomer Dan", "Zoomer Zack", "Cryptobro",
+    "Karen Prime", "Giga Chud", "Ninja Nick", "Chef Chaos", "Pixel Pete",
+    "Vortex", "Shadow Stan", "Turbo Todd", "Iron Izzy", "Phantom Phil",
+    "Sledge", "Bouncing Betty", "Laser Luke", "Captain Clapper", "Smash Sally",
+    "Glitch Gordon", "Alpha Art", "Beta Ben", "Omega Owen", "Owentogud"
+];
+
+const rosterEmojis = ["👩‍💼", "👹", "⚡", "🗿", "🧂", "⌨️", "👴", "🌧️", "📱", "🪙", "👵", "👺", "🥷", "👨‍🍳", "👾", "🌀", "👤", "🏎️", "🤖", "👻", "🔨", "🎾", "🔫", "👏", "💥", "💻", "🦁", "🐺", "⚛️", "👑"];
+
+// Populate standard 30-character array
+for (let i = 0; i < 30; i++) {
+    const archetypes = [
+        { type: 'Combo', bg: 'bg-combo', weight: 80, speed: 6.5, damage: 8, kb: 8 },
+        { type: 'Heavy', bg: 'bg-heavy', weight: 130, speed: 4.2, damage: 16, kb: 14 },
+        { type: 'Lightweight', bg: 'bg-light', weight: 65, speed: 8.5, damage: 6, kb: 5 }
+    ];
+    const arch = archetypes[i % 3];
+
+    ROSTER.push({
+        id: `char_${i}`,
+        name: rosterNames[i],
+        emoji: rosterEmojis[i],
+        archetype: arch.type,
+        bgClass: arch.bg,
+        weight: arch.weight,
+        speed: arch.speed,
+        damage: arch.damage,
+        knockback: arch.kb,
+        isRestricted: rosterNames[i] === "Owentogud"
+    });
+}
+
+function renderRoster() {
+    const container = document.getElementById('roster-container');
+    if (!container) return;
+    container.innerHTML = '';
+
+    ROSTER.forEach((char) => {
+        const card = document.createElement('div');
+        card.className = 'char-card';
+        const isLocked = char.isRestricted && !adminBypassed;
+
+        card.innerHTML = `
+            <div class="char-portrait">${isLocked ? '🔒' : char.emoji}</div>
+            <div class="char-name">${char.name}</div>
+            <div class="type-badge ${isLocked ? 'bg-heavy' : char.bgClass}">
+                ${isLocked ? 'LOCKED' : char.archetype}
+            </div>
+        `;
+
+        card.onclick = () => {
+            if (char.isRestricted && !adminBypassed) {
+                alert("Character locked! Enter Admin Code to bypass owentogud restrictions.");
+                return;
+            }
+            if (typeof chooseCharacter === 'function') {
+                chooseCharacter(char);
+            }
+        };
+
+        container.appendChild(card);
+    });
+}
