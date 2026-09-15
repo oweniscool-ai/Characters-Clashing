@@ -1,69 +1,93 @@
-// Roster initialization and management
-const ROSTER = [];
-
-// Fallback generator for 30 slots
-const rosterNames = [
-    "Kathy the Karen", "Bud the Chud", "Speedy", "Mega Chad", "Salty Sam",
-    "Keyboard Warrior", "Boomer Bob", "Doomer Dan", "Zoomer Zack", "Cryptobro",
-    "Karen Prime", "Giga Chud", "Ninja Nick", "Chef Chaos", "Pixel Pete",
-    "Vortex", "Shadow Stan", "Turbo Todd", "Iron Izzy", "Phantom Phil",
-    "Sledge", "Bouncing Betty", "Laser Luke", "Captain Clapper", "Smash Sally",
-    "Glitch Gordon", "Alpha Art", "Beta Ben", "Omega Owen", "Owentogud"
-];
-
-const rosterEmojis = ["👩‍💼", "👹", "⚡", "🗿", "🧂", "⌨️", "👴", "🌧️", "📱", "🪙", "👵", "👺", "🥷", "👨‍🍳", "👾", "🌀", "👤", "🏎️", "🤖", "👻", "🔨", "🎾", "🔫", "👏", "💥", "💻", "🦁", "🐺", "⚛️", "👑"];
-
-// Populate standard 30-character array
-for (let i = 0; i < 30; i++) {
-    const archetypes = [
-        { type: 'Combo', bg: 'bg-combo', weight: 80, speed: 6.5, damage: 8, kb: 8 },
-        { type: 'Heavy', bg: 'bg-heavy', weight: 130, speed: 4.2, damage: 16, kb: 14 },
-        { type: 'Lightweight', bg: 'bg-light', weight: 65, speed: 8.5, damage: 6, kb: 5 }
-    ];
-    const arch = archetypes[i % 3];
-
-    ROSTER.push({
-        id: `char_${i}`,
-        name: rosterNames[i],
-        emoji: rosterEmojis[i],
-        archetype: arch.type,
-        bgClass: arch.bg,
-        weight: arch.weight,
-        speed: arch.speed,
-        damage: arch.damage,
-        knockback: arch.kb,
-        isRestricted: rosterNames[i] === "Owentogud"
-    });
-}
-
-function renderRoster() {
-    const container = document.getElementById('roster-container');
-    if (!container) return;
-    container.innerHTML = '';
-
-    ROSTER.forEach((char) => {
-        const card = document.createElement('div');
-        card.className = 'char-card';
-        const isLocked = char.isRestricted && !adminBypassed;
-
-        card.innerHTML = `
-            <div class="char-portrait">${isLocked ? '🔒' : char.emoji}</div>
-            <div class="char-name">${char.name}</div>
-            <div class="type-badge ${isLocked ? 'bg-heavy' : char.bgClass}">
-                ${isLocked ? 'LOCKED' : char.archetype}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Characters Clashing</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div id="game-container">
+        <!-- MAIN MENU -->
+        <div id="main-menu" class="screen">
+            <h1 class="title">Characters Clashing</h1>
+            <div class="menu-buttons">
+                <button class="btn" onclick="selectMode('offline')">Offline Play (Vs AI)</button>
+                <button class="btn" onclick="selectMode('training')">Training Mode</button>
+                <button class="btn btn-mod" onclick="openModMenu()">$20 Modding Suite</button>
+                <button class="btn" onclick="openAdminMenu()">Admin Override Code</button>
             </div>
-        `;
+        </div>
 
-        card.onclick = () => {
-            if (char.isRestricted && !adminBypassed) {
-                alert("Character locked! Enter Admin Code to bypass owentogud restrictions.");
-                return;
-            }
-            if (typeof chooseCharacter === 'function') {
-                chooseCharacter(char);
-            }
-        };
+        <!-- 30-CHARACTER SELECTION SCREEN -->
+        <div id="char-select" class="screen hidden">
+            <div class="roster-header">
+                <h2>Select Character</h2>
+                <button class="btn" onclick="showScreen('main-menu')">Main Menu</button>
+            </div>
+            <div class="roster-grid" id="roster-container"></div>
+        </div>
 
-        container.appendChild(card);
-    });
-}
+        <!-- GAMEPLAY CANVAS & TOUCH CONTROLS -->
+        <div id="game-screen" class="screen hidden">
+            <canvas id="game-canvas" width="1280" height="720"></canvas>
+
+            <div class="hud">
+                <div class="player-hud p1">
+                    <span id="p1-name" class="p-name">Player 1</span>
+                    <span id="p1-percent" class="p-percent">0%</span>
+                </div>
+                <div class="player-hud p2">
+                    <span id="p2-name" class="p-name">Player 2</span>
+                    <span id="p2-percent" class="p-percent">0%</span>
+                </div>
+            </div>
+
+            <!-- VIRTUAL TOUCH CONTROLS FOR IPAD -->
+            <div id="touch-controls">
+                <div class="dpad">
+                    <button class="touch-btn" id="btn-left">◀</button>
+                    <button class="touch-btn" id="btn-right">▶</button>
+                </div>
+                <div class="action-btns">
+                    <button class="touch-btn btn-jump" id="btn-jump">JUMP</button>
+                    <button class="touch-btn btn-attack" id="btn-attack">ATTACK</button>
+                </div>
+            </div>
+
+            <div id="mod-indicator" class="mod-status-bar">STATUS: Engine Default</div>
+        </div>
+
+        <!-- $20 MODDING MENU MODAL -->
+        <div id="mod-modal" class="modal hidden">
+            <div class="modal-box">
+                <h2>$20 Modding Suite</h2>
+                <button class="btn btn-mod" onclick="apply20DollarMod('god_knockback')">Enable 2x Knockback</button>
+                <button class="btn btn-mod" onclick="apply20DollarMod('hyper_speed')">Enable Hyper Speed</button>
+                <button class="btn btn-mod" onclick="apply20DollarMod('infinite_jumps')">Enable Infinite Jumps</button>
+                <button class="btn" onclick="closeModMenu()">Close</button>
+            </div>
+        </div>
+
+        <!-- ADMIN BYPASS CODE MODAL -->
+        <div id="admin-modal" class="modal hidden">
+            <div class="modal-box">
+                <h2>Admin Code Override</h2>
+                <p>Enter code to bypass <b>Owentogud</b> restrictions.</p>
+                <input type="password" id="admin-code-input" placeholder="Enter Admin Code..." />
+                <button class="btn" onclick="submitAdminCode()">Bypass Owentogud</button>
+                <button class="btn" onclick="closeAdminMenu()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CORE SCRIPTS -->
+    <script src="js/admin.js"></script>
+    <script src="js/mods.js"></script>
+    <script src="js/roster.js"></script>
+    <script src="characters/kathy.js"></script>
+    <script src="characters/bud.js"></script>
+    <script src="characters/owentogud.js"></script>
+    <script src="js/engine.js"></script>
+</body>
+</html>
