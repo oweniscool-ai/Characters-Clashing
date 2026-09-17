@@ -1,0 +1,6 @@
+export const CONFIG = {
+  FPS: 60,
+  GRAVITY: 0.8,
+  CANVAS_WIDTH: 1280,
+  CANVAS_HEIGHT: 720
+};
