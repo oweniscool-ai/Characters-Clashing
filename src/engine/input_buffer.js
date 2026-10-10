@@ -1,25 +1,25 @@
-import { HUDOverlay } from './hud_overlay.js';
-import { PauseMenuUI } from './pause_menu.js';
-import { CountdownUI } from './countdown_ui.js';
-
-export class UIManager {
-  constructor(canvasWidth = 1280, canvasHeight = 720) {
-    this.hud = new HUDOverlay(canvasWidth, canvasHeight);
-    this.pauseMenu = new PauseMenuUI();
-    this.countdown = new CountdownUI();
+export class InputBuffer {
+  constructor(bufferWindowFrames = 10) {
+    this.bufferWindowFrames = bufferWindowFrames;
+    this.queue = [];
   }
 
-  renderInGameHUD(ctx, players, stocksMap, percentagesMap) {
-    this.hud.render(ctx, players, stocksMap, percentagesMap);
+  pushInput(inputAction, currentFrame) {
+    this.queue.push({ action: inputAction, frame: currentFrame });
+    this.pruneOldInputs(currentFrame);
   }
 
-  renderPause(ctx, width, height) {
-    this.pauseMenu.render(ctx, width, height);
+  consumeInput(targetAction, currentFrame) {
+    this.pruneOldInputs(currentFrame);
+    const index = this.queue.findIndex(item => item.action === targetAction);
+    if (index !== -1) {
+      this.queue.splice(index, 1);
+      return true;
+    }
+    return false;
   }
 
-  renderCountdown(ctx, text, width, height) {
-    this.countdown.render(ctx, text, width, height);
+  pruneOldInputs(currentFrame) {
+    this.queue = this.queue.filter(item => currentFrame - item.frame <= this.bufferWindowFrames);
   }
 }
-
-export const uiManager = new UIManager();
